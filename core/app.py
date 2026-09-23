@@ -14,7 +14,6 @@ class SensitivityModel:
 
     def __init__(self, settings: R6Settings):
         self.settings = settings
-        self._gain = 0.0
         self.update_settings()
 
     def update_settings(self) -> None:
@@ -23,21 +22,14 @@ class SensitivityModel:
         Call this whenever settings change.
         """
         dpi_norm = self.settings.dpi / 800.0
-        sens = self.settings.horizontalSens
         xf = self.settings.xfactorAiming
+
         # Arbitrary scaling for usable degree values
-        self._gain = dpi_norm * sens * xf * 100.0
+        self._gain_h = dpi_norm * self.settings.horizontalSens * xf * 100.0
+        self._gain_v = dpi_norm * self.settings.verticalSens * xf * 100.0
 
-    def predict_rotation(self, mouse_pixels: float) -> float:
-        """
-        Predict rotation angle (degrees) for a given mouse movement.
-        LINEAR APPROXIMATION.
-        """
-        return mouse_pixels * self._gain * 0.1
-
-    def get_gain(self) -> float:
-        """Return current gain factor."""
-        return self._gain
+    def get_gain(self) -> tuple:
+        return self._gain_h, self._gain_v
 
 
 class Application:
@@ -118,9 +110,7 @@ class Application:
     def _toggle_screen(self):
         if self.current_screen_name == "settings":
             self.current_screen_name = "experiment"
-            self.experiment_screen.start_new_trial(
-                (self.screen.get_width() // 2, self.screen.get_height() // 2)
-            )
+            self.experiment_screen.start_new_trial()
         else:
             self.current_screen_name = "settings"
         self.current_screen = self.screens[self.current_screen_name]

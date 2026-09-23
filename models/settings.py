@@ -14,3 +14,4 @@ class R6Settings:
     verticalSens: int = 10
     selectedAds: int = 0
     xfactorAiming: float = 0.00223
+    threshold: int = 15

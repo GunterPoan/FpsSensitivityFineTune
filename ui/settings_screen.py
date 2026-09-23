@@ -117,6 +117,17 @@ class SettingsScreen:
         )
         self._xfactor_label_y = ry
 
+        ry += self.line_height
+        self.threshold_field = InputField(
+            self.right_control_x, ry,
+            self.right_control_w, self.control_h,
+            value=self.settings.threshold,
+            text_input_type="int",
+            min_value=1,
+            max_value=99,
+        )
+        self._threshold_label_y = ry
+
         # ------------------------------------------------------------------
         # Bottom-left: Display
         # ------------------------------------------------------------------
@@ -201,6 +212,7 @@ class SettingsScreen:
             self.dpi_field,
             self.fov_field,
             self.xfactor_field,
+            self.threshold_field,
             self.horiz_field,
             self.vert_field,
         ]
@@ -270,6 +282,7 @@ class SettingsScreen:
         self._draw_section_title(surface, "FOV & Advanced", self.right_section_x, self._fov_section_title_y)
         self._draw_label(surface, "FOV", self.right_label_x, self._fov_label_y)
         self._draw_label(surface, "XFactorAiming", self.right_label_x, self._xfactor_label_y)
+        self._draw_label(surface, "Threshold(%)", self.right_label_x, self._threshold_label_y)
 
         # --- Bottom row ---
         self._draw_section_title(surface, "Display", self.left_section_x, self._display_title_y)
@@ -323,6 +336,7 @@ class SettingsScreen:
         self.settings.horizontalSens = self.horiz_field.get_value()
         self.settings.verticalSens = self.vert_field.get_value()
         self.settings.xfactorAiming = self.xfactor_field.get_value()
+        self.settings.threshold = self.threshold_field.get_value()
 
         self.settings.resolution = RESOLUTION_OPTIONS[
             self.resolution_dropdown.selected_index
