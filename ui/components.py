@@ -33,6 +33,7 @@ class Dropdown:
         self.expanded = False
         self.hover_index = -1
         self.option_height = height
+        self._expand_direction = "down"  # "down" or "up"
 
     # -----------------------------------------------------------------------
     # Event handling
@@ -104,6 +105,16 @@ class Dropdown:
 
         # --- Draw expanded list ---
         if self.expanded:
+            # Auto-detect expand direction based on available space
+            total_options_height = len(self.options) * self.option_height
+            space_below = surface.get_height() - (self.rect.y + self.rect.height)
+            space_above = self.rect.y
+            
+            if total_options_height > space_below and space_above > space_below:
+                self._expand_direction = "up"
+            else:
+                self._expand_direction = "down"
+                
             for i, option in enumerate(self.options):
                 option_rect = self._get_option_rect(i)
 
@@ -127,9 +138,13 @@ class Dropdown:
         Compute the screen rectangle for the option at *index*
         when the dropdown is expanded.
         """
+        if self._expand_direction == "up":
+            y = self.rect.y - (index + 1) * self.option_height
+        else:
+            y = self.rect.y + (index + 1) * self.option_height
         return pygame.Rect(
             self.rect.x,
-            self.rect.y + (index + 1) * self.option_height,
+            y,
             self.rect.width,
             self.option_height,
         )

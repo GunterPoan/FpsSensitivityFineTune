@@ -31,7 +31,7 @@ class ExperimentScreen:
 
         # Reset button (bottom-left)
         self.reset_font = pygame.font.SysFont("arial", 16)
-        self.reset_button_rect = pygame.Rect(30, 365, 80, 30)
+        self.reset_button_rect = pygame.Rect(0, 0, 80, 30)
 
     def start_new_trial(self, screen_center):
         """Reset for a new flick attempt."""
@@ -96,6 +96,10 @@ class ExperimentScreen:
 
     def draw(self, surface: pygame.Surface) -> None:
         surface.fill(BG_DARK)
+
+        # Dynamically position reset button at bottom-left
+        self.reset_button_rect.x = int(surface.get_width() * 0.033)
+        self.reset_button_rect.y = int(surface.get_height() * 0.808)
 
         center_x = surface.get_width() // 2
         center_y = surface.get_height() // 2

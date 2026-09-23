@@ -48,15 +48,26 @@ class Application:
     def __init__(self):
         pygame.init()
 
-        self.screen = pygame.display.set_mode((1600, 900))
         pygame.display.set_caption("R6 Sensitivity Calibration")
-
-        self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont("arial", 22)
 
         self.settings = R6Settings()
         self.model = SensitivityModel(self.settings)
-        self.settings_screen = SettingsScreen(self.settings, self.font)
+
+        # Window sizing: compute initial size from aspect ratio
+        desktop_info = pygame.display.Info()
+        self.desktop_w = desktop_info.current_w or 1920
+        self.desktop_h = desktop_info.current_h or 1080
+        self.window_w, self.window_h = self._calc_window_size(
+            self.settings.aspectRatio
+        )
+        self.screen = pygame.display.set_mode((self.window_w, self.window_h))
+
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.SysFont("arial", 22)
+        
+        self.settings_screen = SettingsScreen(
+            self.settings, self.font, self.window_w, self.window_h
+        )
         self.experiment_screen = ExperimentScreen(self.model)
 
         # Screen management
@@ -67,8 +78,15 @@ class Application:
         self.current_screen_name = "experiment"
         self.current_screen = self.screens["experiment"]
 
-        # Navigation button (top-right)
-        self.nav_button_rect = pygame.Rect(790, 20, 80, 34)
+
+        # Aspect ratio change detection
+        self._previous_aspect_ratio = self.settings.aspectRatio
+
+        # Navigation button (top-right, dynamically positioned)
+        nav_w, nav_h = 80, 34
+        self.nav_button_rect = pygame.Rect(
+            self.window_w - nav_w - 20, 20, nav_w, nav_h
+        )
         self.nav_font = pygame.font.SysFont("arial", 18)
 
         self.running = False
@@ -107,9 +125,55 @@ class Application:
             self.current_screen_name = "settings"
         self.current_screen = self.screens[self.current_screen_name]
 
+    def _calc_window_size(self, aspect_str: str):
+        """
+        Compute window size based on aspect ratio.
+        Window fills ~85% of screen width or height, whichever limits first.
+        Minimum size: 640x400.
+        """
+        screen_w = self.desktop_w
+        screen_h = self.desktop_h
+
+        # Parse aspect ratio
+        if aspect_str == "16:9":
+            ratio = 16.0 / 9.0
+        elif aspect_str == "4:3":
+            ratio = 4.0 / 3.0
+        else:
+            ratio = 16.0 / 9.0
+
+        # Try 85% of screen width
+        w = int(screen_w * 0.85)
+        h = int(w / ratio)
+
+        # If height exceeds 85% of screen, constrain by height instead
+        max_h = int(screen_h * 0.85)
+        if h > max_h:
+            h = max_h
+            w = int(h * ratio)
+
+        return max(w, 640), max(h, 400)
+
+    def _resize_window(self, aspect_str: str):
+        """Resize window to match new aspect ratio and update dependent rects."""
+        self.window_w, self.window_h = self._calc_window_size(aspect_str)
+        self.screen = pygame.display.set_mode((self.window_w, self.window_h))
+
+        # Reposition nav button to top-right corner
+        self.nav_button_rect.x = self.window_w - self.nav_button_rect.width - 20
+
+        # Resize settings screen layout
+        self.settings_screen.resize(self.window_w, self.window_h)
+
     def _update(self):
         self.current_screen.update()
         self.model.update_settings()
+
+        # Detect aspect ratio change → resize window
+        current_aspect = self.settings.aspectRatio
+        if current_aspect != self._previous_aspect_ratio:
+            self._resize_window(current_aspect)
+            self._previous_aspect_ratio = current_aspect
 
     def _draw(self):
         self.current_screen.draw(self.screen)

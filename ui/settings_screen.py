@@ -18,43 +18,73 @@ class SettingsScreen:
     Right: FOV & Advanced, Sensitivity & ADS
     """
 
-    def __init__(self, settings: R6Settings, font: pygame.font.Font):
-        # Store fonts for later use
+    def __init__(
+        self,
+        settings: R6Settings,
+        font: pygame.font.Font,
+        width: int = 900,
+        height: int = 520,
+    ):
         self.font = font
         font_size = font.get_height()
         self.bold_font = pygame.font.SysFont("arial", font_size, bold=True)
 
         self.settings = settings
+        self._width = width
+        self._height = height
+
+        # Recalculate layout based on current dimensions
+        self._recalculate_layout(width, height)
+        self._build_controls()
+        
+
+    def _recalculate_layout(self, width: int, height: int) -> None:
+        """
+        Recalculate all layout constants and control positions based on
+        current window dimensions.
+        """
+        self._width = width
+        self._height = height
 
         # ------------------------------------------------------------------
-        # Layout constants — two-column design
+        # Proportional layout constants
         # ------------------------------------------------------------------
-        self.left_section_x = 30
-        self.left_label_x = 80
-        self.left_control_x = 230
-        self.left_control_w = 180
+        # Horizontal: left column starts at 3.3%, right at 53%
+        self.left_section_x = int(width * 0.033)
+        self.left_label_x = int(width * 0.089)
+        self.left_control_x = int(width * 0.256)
+        self.left_control_w = int(width * 0.200)
 
-        self.right_section_x = 480
-        self.right_label_x = 530
-        self.right_control_x = 680
-        self.right_control_w = 180
+        self.right_section_x = int(width * 0.533)
+        self.right_label_x = int(width * 0.589)
+        self.right_control_x = int(width * 0.756)
+        self.right_control_w = int(width * 0.200)
 
-        self.top_section_y = 80
-        self.bottom_section_y = 280
-        self.line_height = 45
-        self.control_h = 36
+        # Vertical: top section at 15%, bottom at 54%, line height ~8%
+        self.top_section_y = int(height * 0.154)
+        self.bottom_section_y = int(height * 0.538)
+        self.line_height = int(height * 0.087)
+        self.control_h = int(height * 0.069)
 
+        self._build_controls()
+
+    def _build_controls(self):
+        """
+        Create or recreate all InputField and Dropdown controls.
+        Called during init and resize. Reads current values from
+        self.settings to preserve data.
+        """
         # ------------------------------------------------------------------
         # Top-left: Mouse
         # ------------------------------------------------------------------
         ly = self.top_section_y
         self._mouse_title_y = ly
 
-        ly += 40
+        ly += int(self._height * 0.077)
         self.dpi_field = InputField(
             self.left_control_x, ly,
             self.left_control_w, self.control_h,
-            value=settings.dpi,
+            value=self.settings.dpi,
             text_input_type="int",
             min_value=100,
             max_value=16000,
@@ -67,11 +97,11 @@ class SettingsScreen:
         ry = self.top_section_y
         self._fov_section_title_y = ry
 
-        ry += 40
+        ry += int(self._height * 0.077)
         self.fov_field = InputField(
             self.right_control_x, ry,
             self.right_control_w, self.control_h,
-            value=settings.fov,
+            value=self.settings.fov,
             text_input_type="int",
             min_value=60,
             max_value=120,
@@ -82,7 +112,7 @@ class SettingsScreen:
         self.xfactor_field = InputField(
             self.right_control_x, ry,
             self.right_control_w, self.control_h,
-            value=settings.xfactorAiming,
+            value=self.settings.xfactorAiming,
             text_input_type="float",
         )
         self._xfactor_label_y = ry
@@ -93,10 +123,10 @@ class SettingsScreen:
         ly = self.bottom_section_y
         self._display_title_y = ly
 
-        ly += 40
+        ly += int(self._height * 0.077)
         res_index = (
-            RESOLUTION_OPTIONS.index(settings.resolution)
-            if settings.resolution in RESOLUTION_OPTIONS
+            RESOLUTION_OPTIONS.index(self.settings.resolution)
+            if self.settings.resolution in RESOLUTION_OPTIONS
             else 0
         )
         self.resolution_dropdown = Dropdown(
@@ -109,8 +139,8 @@ class SettingsScreen:
 
         ly += self.line_height
         asp_index = (
-            ASPECT_OPTIONS.index(settings.aspectRatio)
-            if settings.aspectRatio in ASPECT_OPTIONS
+            ASPECT_OPTIONS.index(self.settings.aspectRatio)
+            if self.settings.aspectRatio in ASPECT_OPTIONS
             else 0
         )
         self.aspect_dropdown = Dropdown(
@@ -127,11 +157,11 @@ class SettingsScreen:
         ry = self.bottom_section_y
         self._sens_title_y = ry
 
-        ry += 40
+        ry += int(self._height * 0.077)
         self.horiz_field = InputField(
             self.right_control_x, ry,
             self.right_control_w, self.control_h,
-            value=settings.horizontalSens,
+            value=self.settings.horizontalSens,
             text_input_type="int",
             min_value=1,
             max_value=100,
@@ -142,7 +172,7 @@ class SettingsScreen:
         self.vert_field = InputField(
             self.right_control_x, ry,
             self.right_control_w, self.control_h,
-            value=settings.verticalSens,
+            value=self.settings.verticalSens,
             text_input_type="int",
             min_value=1,
             max_value=100,
@@ -152,8 +182,8 @@ class SettingsScreen:
         ry += self.line_height
         ads_names = get_ads_names()
         ads_index = (
-            settings.selectedAds
-            if 0 <= settings.selectedAds < len(ads_names)
+            self.settings.selectedAds
+            if 0 <= self.settings.selectedAds < len(ads_names)
             else 0
         )
         self.ads_dropdown = Dropdown(
@@ -179,6 +209,12 @@ class SettingsScreen:
             self.aspect_dropdown,
             self.ads_dropdown,
         ]
+
+    def resize(self, width: int, height: int) -> None:
+        """
+        Recalculate layout and rebuild controls for a new window size.
+        """
+        self._recalculate_layout(width, height)
 
     # -----------------------------------------------------------------------
     # Event routing
@@ -222,7 +258,9 @@ class SettingsScreen:
 
         # Main title
         title_surf = self.font.render("R6 Sensitivity Calibration", True, WHITE)
-        title_rect = title_surf.get_rect(midtop=(surface.get_width() // 2, 20))
+        title_rect = title_surf.get_rect(
+            midtop=(surface.get_width() // 2, int(surface.get_height() * 0.038))
+        )
         surface.blit(title_surf, title_rect)
 
         # --- Top row ---
