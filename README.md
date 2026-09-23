@@ -47,6 +47,67 @@ By default, it launches directly into the **Experiment** screen. Use the top-rig
 
 ---
 
+## Building a Standalone Executable
+
+Want to share this tool with friends without asking them to install Python? Package it with **PyInstaller**.
+
+### Prerequisites
+
+```bash
+pip install pyinstaller
+```
+
+### One-Time Setup (Optional Icon)
+
+Place your `icon.ico` in the project root.
+
+### Build Command
+
+```bash
+# Onedir (recommended — faster startup, smaller file size)
+pyinstaller main.py --name "R6-Sens-Calibration" --windowed --onedir --noupx --icon "icon.ico"
+
+# Or oneline (single .exe — slower startup, easier to share)
+pyinstaller main.py --name "R6-Sens-Calibration" --windowed --onefile --noupx --icon "icon.ico"
+```
+
+| Parameter | Meaning |
+|-----------|---------|
+| `--windowed` | No console window pops up |
+| `--onedir` | Output a folder with all dependencies |
+| `--onefile` | Output a single .exe (slower launch) |
+| `--noupx` | Disable UPX compression (avoids DLL issues) |
+| `--icon "icon.ico"` | Custom application icon |
+
+### Output
+
+```
+dist/
+└── R6-Sens-Calibration/          ← Ready-to-run folder
+    ├── R6-Sens-Calibration.exe
+    ├── python3.dll
+    └── ...
+```
+
+**The entire `dist/R6-Sens-Calibration/` folder is portable.** Zip it up and run on any Windows PC without Python installed.
+
+### Rebuild After Code Changes
+
+```bash
+rm -r -fo build, dist        # Clean old artifacts
+pyinstaller R6-Sens-Calibration.spec --clean
+```
+
+### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| `Failed to load Python DLL` | Add `--noupx` or manually copy `python312.dll` from your Python install into `build/R6-Sens-Calibration/_internal/` |
+| Output file too large | Normal — PyInstaller bundles the entire Python runtime |
+| Icon not showing | Make sure the file is a valid `.ico` format, not just renamed `.png` |
+
+---
+
 ## Controls
 
 ### Flick Test Screen
