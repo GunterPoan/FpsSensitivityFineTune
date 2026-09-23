@@ -23,7 +23,7 @@ ADS_TABLE: List[Dict[str, Any]] = [
     {"name": "1.0x",  "zoom": 1.0},
     {"name": "1.5x",  "zoom": 1.5},
     {"name": "2.0x",  "zoom": 2.0},
-    {"name": "3.0x",  "zoom": 3.5},
+    {"name": "3.0x",  "zoom": 3.0},
     {"name": "12.0x", "zoom": 12.0},
 ]
 
