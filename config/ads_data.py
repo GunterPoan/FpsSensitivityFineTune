@@ -20,10 +20,11 @@ from typing import List, Dict, Any
 # but does NOT claim to be the actual in-game multiplier.
 # ---------------------------------------------------------------------------
 ADS_TABLE: List[Dict[str, Any]] = [
-    {"name": "1.0x",  "zoom": 1.0},
-    {"name": "2.0x",  "zoom": 2.0},
-    {"name": "3.0x",  "zoom": 3.0},
-    {"name": "12.0x", "zoom": 12.0},
+    {"name": "0.0x",  "multiplier": 1.0},
+    {"name": "1.0x",  "multiplier": 0.6},
+    {"name": "2.0x",  "multiplier": 0.49},
+    {"name": "3.0x",  "multiplier": 0.35},
+    {"name": "8.0x",  "multiplier": 0.14},
 ]
 
 
@@ -54,3 +55,10 @@ def get_ads_data(index: int) -> Dict[str, Any]:
     if not (0 <= index < len(ADS_TABLE)):
         raise IndexError("ADS index out of range")
     return ADS_TABLE[index]
+
+def get_ads_multiplier(index: int) -> float:
+    """
+    Return the official ADS multiplier for the given zoom level.
+    This is the constant used in the Y5S3 conversion formula.
+    """
+    return get_ads_data(index)["multiplier"]

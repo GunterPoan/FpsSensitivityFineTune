@@ -15,3 +15,4 @@ class R6Settings:
     selectedAds: int = 0
     xfactorAiming: float = 0.00223
     threshold: int = 15
+    adsSliderValue: int = 50

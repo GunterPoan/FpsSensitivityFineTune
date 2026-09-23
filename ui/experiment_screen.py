@@ -3,6 +3,8 @@ import random
 
 import pygame
 
+from config.ads_data import get_ads_multiplier, get_ads_names
+
 from ui.colors import BG_DARK, WHITE, TEXT_NORMAL, TEXT_DIM, PANEL_BORDER, PANEL_BG
 
 
@@ -172,6 +174,29 @@ class ExperimentScreen:
             rec_v = int(round(sens_v / avg_v_ratio))
             rec_v = max(1, min(100, rec_v))
 
+        # --- ADS reference (based on selected zoom) ---
+        zoom_name = get_ads_names()[self.model.settings.selectedAds]
+        
+        if zoom_name == "0.0x":
+            # Hipfire: only show H/V suggestion (existing logic)
+            rec_ads = None
+            user_slider = None
+        else:
+            # Non-hipfire: suggest based on user's in-game slider × ratio
+            user_slider = self.model.settings.adsSliderValue
+            
+            # Compute average ratio from available axes
+            valid_ratios = []
+            if has_h_data and avg_h_ratio > 0.01:
+                valid_ratios.append(avg_h_ratio)
+            if has_v_data and avg_v_ratio > 0.01:
+                valid_ratios.append(avg_v_ratio)
+            
+            avg_ratio = sum(valid_ratios) / len(valid_ratios) if valid_ratios else 1.0
+            rec_ads = int(round(user_slider / avg_ratio)) if avg_ratio > 0 else None
+            if rec_ads is not None:
+                rec_ads = max(1, rec_ads)  # slider cannot be below 1
+
         # Threshold
         threshold = self.model.settings.threshold / 100.0
         ratio_lower = 1 - threshold
@@ -186,6 +211,8 @@ class ExperimentScreen:
             "v_ratio": avg_v_ratio,
             "rec_h": rec_h,
             "rec_v": rec_v,
+            "rec_ads": rec_ads,
+            "zoom_name": zoom_name,
             "has_h_data": has_h_data,
             "has_v_data": has_v_data,
             "needs_adjust": needs_adjust,
@@ -302,6 +329,21 @@ class ExperimentScreen:
             
             tend_surf = self.font.render(full_tend, True, color)
             surface.blit(tend_surf, (30, y_offset))
+
+            # ADS reference line
+            y_offset += 30
+            rec_ads = analysis["rec_ads"]
+            zoom = analysis["zoom_name"]
+            
+            if zoom == "0.0x":
+                ads_text = "Hipfire sensitivity applied directly"
+            elif rec_ads is not None:
+                ads_text = f"ADS {zoom}: Recommend {rec_ads}"
+            else:
+                ads_text = f"ADS {zoom}: Recommend N/A"
+            
+            ads_surf = self.font.render(ads_text, True, TEXT_DIM)
+            surface.blit(ads_surf, (30, y_offset))
 
         # Reset button
         pygame.draw.rect(surface, PANEL_BG, self.reset_button_rect)

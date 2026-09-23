@@ -33,6 +33,8 @@ class SettingsScreen:
         self._width = width
         self._height = height
 
+        self._previous_ads_index = self.settings.selectedAds
+
         # Recalculate layout based on current dimensions
         self._recalculate_layout(width, height)
         self._build_controls()
@@ -206,6 +208,24 @@ class SettingsScreen:
         self._ads_label_y = ry
 
         # ------------------------------------------------------------------
+        # Optional: ADS slider value input (only for non-0x zoom)
+        # ------------------------------------------------------------------
+        self.ads_slider_field = None
+        if ads_index > 0:   # 0x = hipfire, no slider value needed
+            ry += self.line_height
+            self.ads_slider_field = InputField(
+                self.right_control_x, ry,
+                self.right_control_w, self.control_h,
+                value=self.settings.adsSliderValue,
+                text_input_type="int",
+                min_value=1,
+                max_value=200,
+            )
+            self._ads_slider_label_y = ry
+        else:
+            self._ads_slider_label_y = None
+
+        # ------------------------------------------------------------------
         # Collections for easy iteration
         # ------------------------------------------------------------------
         self.input_fields = [
@@ -216,6 +236,9 @@ class SettingsScreen:
             self.horiz_field,
             self.vert_field,
         ]
+        if self.ads_slider_field is not None:
+            self.input_fields.append(self.ads_slider_field)
+
         self.dropdowns = [
             self.resolution_dropdown,
             self.aspect_dropdown,
@@ -257,6 +280,12 @@ class SettingsScreen:
         """Synchronize UI control values back into the R6Settings model."""
         self._sync_from_ui()
 
+        # If ADS zoom changed, rebuild controls to show/hide slider value field
+        current_ads_index = self.ads_dropdown.selected_index
+        if current_ads_index != self._previous_ads_index:
+            self._previous_ads_index = current_ads_index
+            self._build_controls()
+
     # -----------------------------------------------------------------------
     # Rendering
     # -----------------------------------------------------------------------
@@ -293,6 +322,10 @@ class SettingsScreen:
         self._draw_label(surface, "Horizontal", self.right_label_x, self._horiz_label_y)
         self._draw_label(surface, "Vertical", self.right_label_x, self._vert_label_y)
         self._draw_label(surface, "Zoom", self.right_label_x, self._ads_label_y)
+
+        # --- ADS Row ---
+        if self._ads_slider_label_y is not None:
+            self._draw_label(surface, "Slider Value", self.right_label_x, self._ads_slider_label_y)
 
         # Phase 1: Draw input fields and collapsed dropdowns
         expanded_dropdowns = []
@@ -345,3 +378,6 @@ class SettingsScreen:
             self.aspect_dropdown.selected_index
         ]
         self.settings.selectedAds = self.ads_dropdown.selected_index
+
+        if self.ads_slider_field is not None:
+            self.settings.adsSliderValue = self.ads_slider_field.get_value()
